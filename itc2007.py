@@ -36,6 +36,7 @@ class Problem:
     total_lectures: int
     unavailability: Dict[str, set[Tuple[int,int]]]
     lec_to_course: List[str]
+    course_to_curricula: Dict[str, List[str]]
 
 # --------------------------------------------------------------------- #
 
@@ -119,6 +120,11 @@ def load_instance(path: Path) -> Problem:
             unavailability[parts[0]].add((int(parts[1]), int(parts[2])))
         j += 1
 
+    course_to_curricula: Dict[str, List[str]] = defaultdict(list)
+    for cur in curricula:
+        for cid in cur.courses:
+            course_to_curricula[cid].append(cur.name)
+
     lec_to_course: List[str] = []
     for c in courses:
         lec_to_course.extend([c.cid] * c.lectures)
@@ -134,6 +140,7 @@ def load_instance(path: Path) -> Problem:
         total_lectures=total_lectures,
         unavailability=unavailability,
         lec_to_course=lec_to_course,
+        course_to_curricula=course_to_curricula,
     )
 
 # --------------------------------------------------------------------- #
@@ -165,9 +172,8 @@ def evaluate(problem: Problem, solution: Dict[int, Tuple[int,int,int]]) -> Tuple
             violations += 1
 
         room_map[(d,p,r)].append(lec_id)
-        for cur in problem.curricula:
-            if cid in cur.courses:
-                curr_map[(cur.name,d,p)].append(lec_id)
+        for cur_name in problem.course_to_curricula.get(cid, []):
+            curr_map[(cur_name,d,p)].append(lec_id)
         teacher = problem.course_by_id[cid].teacher
         teach_map[(teacher,d,p)].append(lec_id)
 
@@ -192,9 +198,8 @@ def evaluate(problem: Problem, solution: Dict[int, Tuple[int,int,int]]) -> Tuple
             soft_pen += (course.students - room_cap)
         rs_map[cid].add(r)
         days_map[cid].add(d)
-        for cur in problem.curricula:
-            if cid in cur.courses:
-                cc_map[(cur.name,d)].append(p)
+        for cur_name in problem.course_to_curricula.get(cid, []):
+            cc_map[(cur_name,d)].append(p)
 
     # Minimum Working Days
     for cid, ds in days_map.items():
