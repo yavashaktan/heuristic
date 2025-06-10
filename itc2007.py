@@ -35,6 +35,7 @@ class Problem:
     curricula: List[Curriculum]
     total_lectures: int
     unavailability: Dict[str, set[Tuple[int,int]]]
+    lec_to_course: List[str]
 
 # --------------------------------------------------------------------- #
 
@@ -118,6 +119,10 @@ def load_instance(path: Path) -> Problem:
             unavailability[parts[0]].add((int(parts[1]), int(parts[2])))
         j += 1
 
+    lec_to_course: List[str] = []
+    for c in courses:
+        lec_to_course.extend([c.cid] * c.lectures)
+
     return Problem(
         name=name,
         days=days_n,
@@ -128,6 +133,7 @@ def load_instance(path: Path) -> Problem:
         curricula=curricula,
         total_lectures=total_lectures,
         unavailability=unavailability,
+        lec_to_course=lec_to_course,
     )
 
 # --------------------------------------------------------------------- #
@@ -141,10 +147,8 @@ def evaluate(problem: Problem, solution: Dict[int, Tuple[int,int,int]]) -> Tuple
     #if len(solution) != problem.total_lectures:
     #    violations += abs(len(solution) - problem.total_lectures)
 
-    # Lecture→Course map
-    lec_to_course: List[str] = []
-    for c in problem.courses:
-        lec_to_course.extend([c.cid] * c.lectures)
+    # Lecture→Course map (precomputed during loading)
+    lec_to_course = problem.lec_to_course
 
     # Maps for clashes
     room_map  = defaultdict(list)
