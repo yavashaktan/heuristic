@@ -25,33 +25,81 @@ class CTTIndividual:
         self.rng = rng
         self.genes = np.zeros((problem.total_lectures, 3), dtype=np.int16)
         self._fitness: Optional[float] = None
+
+        # resource index maps
+        teachers = sorted({c.teacher for c in problem.courses})
+        curricula = [c.name for c in problem.curricula]
+        self.teacher_idx = {t: i for i, t in enumerate(teachers)}
+        self.curr_idx = {c: i for i, c in enumerate(curricula)}
+
+        D, P, R = problem.days, problem.periods_per_day, len(problem.rooms)
+        self.room_busy = np.zeros((D, P, R), dtype=bool)
+        self.teacher_busy = np.zeros((D, P, len(self.teacher_idx)), dtype=bool)
+        self.curr_busy = np.zeros((D, P, len(self.curr_idx)), dtype=bool)
+
+        # mapping from lecture to teacher/curricula indices
+        self.lec_teacher = np.empty(problem.total_lectures, dtype=np.int16)
+        self.lec_currs: List[List[int]] = []
+        for lec, cid in enumerate(problem.lec_to_course):
+            teacher = problem.course_by_id[cid].teacher
+            self.lec_teacher[lec] = self.teacher_idx[teacher]
+            self.lec_currs.append([self.curr_idx[c] for c in problem.course_to_curricula.get(cid, [])])
+
+        # unavailability matrix per lecture
+        self.unavail = np.zeros((problem.total_lectures, D, P), dtype=bool)
+        for lec, cid in enumerate(problem.lec_to_course):
+            for d, p in problem.unavailability.get(cid, set()):
+                if d < D and p < P:
+                    self.unavail[lec, d, p] = True
+
         # constructive or random init
-        #self.constructive()
-        self._fitness = None
+        # self.constructive()
 
     def constructive(self) -> None:
-        """Greedy construct: assign each lecture to first non-violating slot."""
-        sol: Dict[int, Tuple[int,int,int]] = {}
+        """Greedy construct using occupancy matrices."""
         D, P, R = self.problem.days, self.problem.periods_per_day, len(self.problem.rooms)
+
+        self.room_busy.fill(False)
+        self.teacher_busy.fill(False)
+        self.curr_busy.fill(False)
+
         for lec in range(self.problem.total_lectures):
-            assigned = False
+            t_idx = self.lec_teacher[lec]
+            cur_idxs = self.lec_currs[lec]
+            placed = False
             for d in range(D):
                 for p in range(P):
+                    if self.unavail[lec, d, p]:
+                        continue
+                    if self.teacher_busy[d, p, t_idx]:
+                        continue
+                    if any(self.curr_busy[d, p, ci] for ci in cur_idxs):
+                        continue
                     for r in range(R):
-                        sol[lec] = (d, p, r)
-                        pen, _ = evaluate(self.problem, sol)
-                        # treat initial feasibility: pen < BIG_PENALTY means <=0 violations
-                        if pen < BIG_PENALTY:
-                            assigned = True
-                            break
-                    if assigned: break
-                if assigned: break
-            if not assigned:
-                # fallback random slot
-                sol[lec] = (self.rng.randrange(D), self.rng.randrange(P), self.rng.randrange(R))
-        # write to genes
-        for i, slot in sol.items():
-            self.genes[i] = slot
+                        if self.room_busy[d, p, r]:
+                            continue
+                        # place lecture
+                        self.genes[lec] = (d, p, r)
+                        self.room_busy[d, p, r] = True
+                        self.teacher_busy[d, p, t_idx] = True
+                        for ci in cur_idxs:
+                            self.curr_busy[d, p, ci] = True
+                        placed = True
+                        break
+                    if placed:
+                        break
+                if placed:
+                    break
+            if not placed:
+                d = self.rng.randrange(D)
+                p = self.rng.randrange(P)
+                r = self.rng.randrange(R)
+                self.genes[lec] = (d, p, r)
+                self.room_busy[d, p, r] = True
+                self.teacher_busy[d, p, t_idx] = True
+                for ci in cur_idxs:
+                    self.curr_busy[d, p, ci] = True
+        self._fitness = None
 
     def to_solution_dict(self) -> Dict[int, Tuple[int,int,int]]:
         return {i: cast(Tuple[int, int, int], tuple(map(int, self.genes[i])))
