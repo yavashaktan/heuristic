@@ -75,20 +75,22 @@ def _worker_run_alg(q: mp.Queue,
 
     problem = scorer.load_instance(Path(inst_str))
 
-    # progress callback — logs every 50 generations / 500 SA steps
+    # progress callback — logs every second
     t0 = time.perf_counter()
+    last_log = t0
 
     def progress_cb(gen: int, best_pen: int, diversity: int | None = None):
-        if gen == 1 or gen % 10 == 0:
-            msg = f"{inst_str} | {alg_name} | seed={seed} | gen={gen} | best={best_pen} | t={int(time.perf_counter()-t0)}s"
-            log(msg, level="DBG")
-
-        if gen % 50 == 0:
-            msg = (f"{inst_str} | {alg_name} | seed={seed} | gen={gen} | "
-                   f"best={best_pen} | t={int(time.perf_counter()-t0)}s")
+        nonlocal last_log
+        now = time.perf_counter()
+        if now - last_log >= 1:
+            msg = (
+                f"{inst_str} | {alg_name} | seed={seed} | gen={gen} | "
+                f"best={best_pen} | t={int(now - t0)}s"
+            )
             if diversity is not None:
                 msg += f" | div={diversity}"
             log(msg, level="DBG")
+            last_log = now
 
     # run algorithm
     start = time.perf_counter()
