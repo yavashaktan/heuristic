@@ -24,7 +24,7 @@ TIME_PAD   = 120                 # s – watchdog cushion
 SEEDS      = list(range(10))
 
 ALG_SPECS = [
-    {"name": "GA",         "module": "timetabelingGA", "kwargs": {"pop_size": 40}},
+    {"name": "GA",         "module": "timetablingGA", "kwargs": {"pop_size": 40}},
     {"name": "BaselineGA", "module": "baselineGA",     "kwargs": {"pop_size": 40}},
     {"name": "SimAnneal",  "module": "simpleSA",       "kwargs": {}},
 ]

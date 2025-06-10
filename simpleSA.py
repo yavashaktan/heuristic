@@ -6,7 +6,7 @@ from __future__ import annotations
 import math, random, time
 from typing import Callable, Optional
 import numpy as np
-from timetabelingGA import CTTIndividual, mutate
+from timetablingGA import CTTIndividual, mutate
 
 BIG_PENALTY = 100_000
 
