@@ -158,24 +158,24 @@ def main():
         row = run_alg_safe(inst, alg, seed)
         pd.DataFrame([row]).to_csv("runs.csv", mode="a", index=False,
                                    header=not Path("runs.csv").exists())
-    print(f"✅ Completed: {inst.name} | {alg['name']} | seed={seed} → "
+        print(f"✅ Completed: {inst.name} | {alg['name']} | seed={seed} → "
               f"penalty={row['penalty']} feasible={row['feasible']} "
               f"time={row['runtime_s']:.1f}s", flush=True)
-    # summary csv
-    df = pd.read_csv("runs.csv")
-    summary = (
-        df.groupby(["instance", "algorithm"])
-          .agg(min_penalty=("penalty", "min"),
-               max_penalty=("penalty", "max"),
-               median_penalty=("penalty", "median"),
-               mean_penalty=("penalty", "mean"),
-               std_penalty=("penalty", "std"),
-               feasible_rate=("feasible", "mean"),
-               mean_runtime_s=("runtime_s", "mean"))
-          .reset_index()
-    )
-    summary.to_csv("summary.csv", index=False)
-    log("Tamamlandı ➜ runs.csv, summary.csv")
+        # summary csv
+        df = pd.read_csv("runs.csv")
+        summary = (
+            df.groupby(["instance", "algorithm"])
+              .agg(min_penalty=("penalty", "min"),
+                   max_penalty=("penalty", "max"),
+                   median_penalty=("penalty", "median"),
+                   mean_penalty=("penalty", "mean"),
+                   std_penalty=("penalty", "std"),
+                   feasible_rate=("feasible", "mean"),
+                   mean_runtime_s=("runtime_s", "mean"))
+              .reset_index()
+        )
+        summary.to_csv("summary.csv", index=False)
+        log("Tamamlandı ➜ runs.csv, summary.csv")
 
 # ───────────────────────── entry ─────────────────────────
 if __name__ == "__main__":
