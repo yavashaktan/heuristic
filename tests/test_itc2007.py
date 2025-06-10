@@ -1,5 +1,8 @@
 import sys
 from pathlib import Path
+import pytest
+
+pytest.importorskip("numpy")
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from itc2007 import load_instance, evaluate

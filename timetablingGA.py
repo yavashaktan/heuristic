@@ -6,8 +6,10 @@ from __future__ import annotations
 import random
 import time
 from typing import Dict, List, Tuple, Callable, Optional, cast
+import multiprocessing as mp
 import numpy as np
-from itc2007 import evaluate
+from itc2007 import evaluate, evaluate_vectorized
+
 
 # Constants
 # default population size was somewhat high; reduce for faster runs
@@ -131,16 +133,12 @@ def crossover(p1: CTTIndividual, p2: CTTIndividual) -> CTTIndividual:
 
 def mutate(ind: CTTIndividual, rate: float) -> None:
     D, P, R = ind.problem.days, ind.problem.periods_per_day, len(ind.problem.rooms)
-    mutated = False
-    for lec in range(len(ind.genes)):
-        if ind.rng.random() < rate:
-            ind.genes[lec] = (
-                ind.rng.randrange(D),
-                ind.rng.randrange(P),
-                ind.rng.randrange(R),
-            )
-            mutated = True
-    if mutated:
+    mask = np.random.rand(len(ind.genes)) < rate
+    if mask.any():
+        n = mask.sum()
+        ind.genes[mask, 0] = np.random.randint(0, D, size=n)
+        ind.genes[mask, 1] = np.random.randint(0, P, size=n)
+        ind.genes[mask, 2] = np.random.randint(0, R, size=n)
         ind._fitness = None
         if ind.rng.random() < CONSTRUCTIVE_PROB:
             ind.constructive()
@@ -150,6 +148,26 @@ def mutate(ind: CTTIndividual, rate: float) -> None:
 def diversity(pop: List[CTTIndividual]) -> int:
     return len({tuple(ind.genes.flatten()) for ind in pop})
 
+
+def _eval_chunk(args):
+    problem, arr = args
+    pens, _ = evaluate_vectorized(problem, arr)
+    return pens
+
+
+def compute_population_fitness(pop: List[CTTIndividual], problem, processes: int | None = None) -> None:
+    """Evaluate all individuals, optionally in parallel."""
+    arr = np.stack([ind.genes for ind in pop])
+    if processes and processes > 1:
+        chunks = np.array_split(arr, processes)
+        with mp.Pool(processes) as pool:
+            results = pool.map(_eval_chunk, [(problem, c) for c in chunks])
+        pens = np.concatenate(results)
+    else:
+        pens, _ = evaluate_vectorized(problem, arr)
+    for ind, pen in zip(pop, pens):
+        ind._fitness = -float(pen)
+
 # GA loop
 
 def run_ctt_ga(
@@ -157,13 +175,15 @@ def run_ctt_ga(
     time_limit: int,
     seed: int,
     pop_size: int,
-    progress_cb: Optional[Callable[[int, float], None]] = None
+    progress_cb: Optional[Callable[[int, float], None]] = None,
+    processes: int | None = None,
 ):
     
     rng = random.Random(seed)
     np.random.seed(seed)
     pop = [CTTIndividual(problem, rng) for _ in range(pop_size)]
-    eval_calls = pop_size
+    compute_population_fitness(pop, problem, processes)
+    eval_calls = len(pop)
     start = time.time()
 
     best = max(pop, key=lambda i: i.fitness())
@@ -188,6 +208,7 @@ def run_ctt_ga(
         for ch in children:
             mutate(ch, mut_rate)
         pop = parents + children
+        compute_population_fitness(pop, problem, processes)
         eval_calls += len(pop)
 
         cur = max(pop, key=lambda i: i.fitness())
@@ -220,7 +241,8 @@ def solve(
     time_limit: int = TIME_LIMIT_DEFAULT,
     seed: int = 0,
     pop_size: int = POP_SIZE_DEFAULT,
-    progress_cb: Optional[Callable[[int, float], None]] = None
+    progress_cb: Optional[Callable[[int, float], None]] = None,
+    processes: int | None = None,
 ) -> Tuple[Dict[int, Tuple[int,int,int]], Dict]:
-    best, stats = run_ctt_ga(problem, time_limit, seed, pop_size, progress_cb)
+    best, stats = run_ctt_ga(problem, time_limit, seed, pop_size, progress_cb, processes)
     return best.to_solution_dict(), stats
