@@ -10,7 +10,11 @@ import numpy as np
 from itc2007 import evaluate
 
 # Constants
-POP_SIZE_DEFAULT = 40
+# default population size was somewhat high; reduce for faster runs
+POP_SIZE_DEFAULT = 20
+
+# probability of applying the constructive repair after genetic operators
+CONSTRUCTIVE_PROB = 0.5
 TIME_LIMIT_DEFAULT = 300  # seconds
 BIG_PENALTY = 100_000
 
@@ -72,17 +76,26 @@ def crossover(p1: CTTIndividual, p2: CTTIndividual) -> CTTIndividual:
     mask = np.random.rand(len(p1.genes)) < 0.5
     child.genes[~mask] = p2.genes[~mask]
     child._fitness = None
-    child.constructive()
+    if random.random() < CONSTRUCTIVE_PROB:
+        child.constructive()
     return child
 
 
 def mutate(ind: CTTIndividual, rate: float) -> None:
     D, P, R = ind.problem.days, ind.problem.periods_per_day, len(ind.problem.rooms)
+    mutated = False
     for lec in range(len(ind.genes)):
         if ind.rng.random() < rate:
-            ind.genes[lec] = (ind.rng.randrange(D), ind.rng.randrange(P), ind.rng.randrange(R))
-    ind._fitness = None
-    ind.constructive()
+            ind.genes[lec] = (
+                ind.rng.randrange(D),
+                ind.rng.randrange(P),
+                ind.rng.randrange(R),
+            )
+            mutated = True
+    if mutated:
+        ind._fitness = None
+        if ind.rng.random() < CONSTRUCTIVE_PROB:
+            ind.constructive()
 
 # Helper
 
