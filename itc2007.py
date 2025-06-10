@@ -66,7 +66,7 @@ def load_instance(path: Path) -> Problem:
         for idx, ln in enumerate(lines):
             if ln.strip().upper() == label.upper():
                 return idx + 1
-        raise ValueError(f"Section '{label}' not found.")(f"Section '{label}' not found")
+        raise ValueError(f"Section '{label}' not found.")
 
     # parse courses
     idx = find_section("COURSES:")
