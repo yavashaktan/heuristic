@@ -5,7 +5,7 @@ and constructive seeding
 from __future__ import annotations
 import random
 import time
-from typing import Dict, List, Tuple, Callable, Optional
+from typing import Dict, List, Tuple, Callable, Optional, cast
 import numpy as np
 from itc2007 import evaluate
 
@@ -50,7 +50,8 @@ class CTTIndividual:
             self.genes[i] = slot
 
     def to_solution_dict(self) -> Dict[int, Tuple[int,int,int]]:
-        return {i: tuple(map(int, self.genes[i])) for i in range(len(self.genes))}
+        return {i: cast(Tuple[int, int, int], tuple(map(int, self.genes[i])))
+                for i in range(len(self.genes))}
 
     def fitness(self) -> float:
         if self._fitness is None:
