@@ -7,7 +7,8 @@ from typing import Optional, Callable
 import numpy as np
 from timetablingGA import CTTIndividual, diversity, mutate, crossover
 
-POP_SIZE_DEFAULT, BIG_PENALTY = 40, 100_000
+# smaller default population speeds up search
+POP_SIZE_DEFAULT, BIG_PENALTY = 20, 100_000
 
 def run_baseline_ga(problem, time_limit: int, seed: int, pop_size: int,
                     progress_cb: Optional[Callable[[int,int],None]] = None):
