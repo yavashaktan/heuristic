@@ -133,7 +133,7 @@ def run_ctt_ga(
         if progress_cb and (first or gen % 10 == 0):
             progress_cb(gen, best_pen)
             first = False
-                    # only break on perfect zero if you really want to stop early:
+        # only break on perfect zero if you really want to stop early:
         if best_pen == 0 and gen >= 10:
             break
 
