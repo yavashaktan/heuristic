@@ -56,7 +56,7 @@ def _worker_run_alg(q: mp.Queue,
                     scorer_mod: str,
                     time_limit: int):
     """Run a single (instance, algorithm, seed) in a child process."""
-
+    print("child alive", flush=True)
     import importlib
     import time
     from pathlib import Path
@@ -79,6 +79,10 @@ def _worker_run_alg(q: mp.Queue,
     t0 = time.perf_counter()
 
     def progress_cb(gen: int, best_pen: int, diversity: int | None = None):
+        if gen == 1 or gen % 10 == 0:
+            msg = f"{inst_str} | {alg_name} | seed={seed} | gen={gen} | best={best_pen} | t={int(time.perf_counter()-t0)}s"
+            log(msg, level="DBG")
+
         if gen % 50 == 0:
             msg = (f"{inst_str} | {alg_name} | seed={seed} | gen={gen} | "
                    f"best={best_pen} | t={int(time.perf_counter()-t0)}s")
@@ -128,6 +132,7 @@ def run_alg_safe(inst_path: Path, alg_spec: Dict, seed: int) -> Dict:
                             alg_spec.get("kwargs", {}), seed, SCORER_MOD, TIME_LIMIT))
     proc.start()
     proc.join(TIME_LIMIT + TIME_PAD)
+    print(f"DEBUG: Child exit code = {proc.exitcode}", flush=True)
 
     if proc.is_alive():
         proc.terminate(); proc.join()
@@ -202,6 +207,6 @@ if __name__ == "__main__":
     print(f"DEBUG: Found {len(ctts)} .ctt file(s): {[p.name for p in ctts]}", flush=True)
 
     # 3) Unbuffered prints from now on
-    sys.stdout.reconfigure(line_buffering=True)
+    sys.stdout.reconfigure(line_buffering=True) # type: ignore
 
     main()

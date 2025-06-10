@@ -22,7 +22,7 @@ class CTTIndividual:
         self.genes = np.zeros((problem.total_lectures, 3), dtype=np.int16)
         self._fitness: Optional[float] = None
         # constructive or random init
-        self.constructive()
+        #self.constructive()
         self._fitness = None
 
     def constructive(self) -> None:
@@ -98,6 +98,7 @@ def run_ctt_ga(
     pop_size: int,
     progress_cb: Optional[Callable[[int, float], None]] = None
 ):
+    
     rng = random.Random(seed)
     np.random.seed(seed)
     pop = [CTTIndividual(problem, rng) for _ in range(pop_size)]
@@ -109,11 +110,13 @@ def run_ctt_ga(
     gen_found = 0
     gen = 0
     stats = {"div0": diversity(pop), "init_penalty": best_pen, "eval_calls": eval_calls}
+    print(f"[GA DEBUG] initial best_pen={best_pen}", flush=True)
 
     first = True
     while time.time() - start < time_limit:
         # ensure we log at least once
         gen += 1
+
         pop.sort(key=lambda i: i.fitness(), reverse=True)
         retain = int(len(pop) * 0.6)
         parents = pop[:retain] + [p for p in pop[retain:] if rng.random() < 0.1]
