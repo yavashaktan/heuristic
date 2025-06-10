@@ -112,7 +112,6 @@ def run_ctt_ga(
     stats = {"div0": diversity(pop), "init_penalty": best_pen, "eval_calls": eval_calls}
     print(f"[GA DEBUG] initial best_pen={best_pen}", flush=True)
 
-    first = True
     while time.time() - start < time_limit:
         # ensure we log at least once
         gen += 1
@@ -134,9 +133,8 @@ def run_ctt_ga(
         cur_pen = -cur.fitness()
         if cur_pen < best_pen:
             best, best_pen, gen_found = cur, cur_pen, gen
-        if progress_cb and (first or gen % 10 == 0):
+        if progress_cb:
             progress_cb(gen, best_pen)
-            first = False
         # only break on perfect zero if you really want to stop early:
         if best_pen == 0 and gen >= 10:
             break
