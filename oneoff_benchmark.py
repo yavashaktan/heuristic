@@ -156,11 +156,22 @@ def main():
         progress_bar(done, total)
         print(f"\n>> STARTING {inst.name} | {alg['name']} | seed={seed}", flush=True)
         row = run_alg_safe(inst, alg, seed)
-        pd.DataFrame([row]).to_csv("runs.csv", mode="a", index=False,
-                                   header=not Path("runs.csv").exists())
-        print(f"✅ Completed: {inst.name} | {alg['name']} | seed={seed} → "
-              f"penalty={row['penalty']} feasible={row['feasible']} "
-              f"time={row['runtime_s']:.1f}s", flush=True)
+        if row.get("timeout"):
+            print(f"⚠️  Timeout: {inst.name} | {alg['name']} | seed={seed}", flush=True)
+            row.setdefault("penalty", None)
+            row.setdefault("feasible", None)
+            row.setdefault("runtime_s", None)
+        else:
+            print(
+                f"✅ Completed: {inst.name} | {alg['name']} | seed={seed} → "
+                f"penalty={row['penalty']} feasible={row['feasible']} "
+                f"time={row['runtime_s']:.1f}s",
+                flush=True,
+            )
+
+        pd.DataFrame([row]).to_csv(
+            "runs.csv", mode="a", index=False, header=not Path("runs.csv").exists()
+        )
         # summary csv
         df = pd.read_csv("runs.csv")
         summary = (
