@@ -29,7 +29,8 @@ def run_baseline_ga(problem, time_limit: int, seed: int, pop_size: int,
         pop, eval_calls = elite+children, eval_calls+len(pop)
         cur_best = max(pop, key=lambda i: i.fitness()); cur_pen = -cur_best.fitness()
         if cur_pen < best_pen: best_pen, best, gen_found = cur_pen, cur_best, gen
-        if progress_cb and gen % 50 == 0: progress_cb(gen, best_pen)
+        if progress_cb and (gen == 1 or gen % 50 == 0):
+            progress_cb(gen, best_pen)
 
     stats = dict(init_penalty=-max(pop, key=lambda i:i.fitness()).fitness(),
                  best_penalty=best_pen, gen_found=gen_found,
