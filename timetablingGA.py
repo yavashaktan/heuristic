@@ -10,6 +10,7 @@ import multiprocessing as mp
 import numpy as np
 from itc2007 import evaluate, evaluate_vectorized
 
+
 # Constants
 # default population size was somewhat high; reduce for faster runs
 POP_SIZE_DEFAULT = 20
