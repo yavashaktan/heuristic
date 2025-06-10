@@ -14,7 +14,7 @@ def neighbour(ind: CTTIndividual, rng: random.Random):
     child = ind.clone(); mutate(child, 1/ind.problem.total_lectures); return child
 
 def solve(problem, time_limit: int, seed: int,
-          progress_cb: Optional[Callable[[int,int],None]] = None,
+          progress_cb: Optional[Callable[[int, float], None]] = None,
           T0: float = 50.0, alpha: float = .95):
     rng = random.Random(seed); np.random.seed(seed)
     cur = best = CTTIndividual(problem, rng)
