@@ -30,7 +30,8 @@ def solve(problem, time_limit: int, seed: int,
             cur, pen_cur = nxt, pen_nxt
             if pen_cur < pen_best: best, pen_best = cur, pen_cur
         T *= alpha
-        if progress_cb and step % 500 == 0: progress_cb(step, pen_best)
+        if progress_cb and (step == 1 or step % 500 == 0):
+            progress_cb(step, pen_best)
 
     stats = dict(init_penalty=-best.fitness(), best_penalty=pen_best,
                  gen_found=0, div0=-1, div_final=-1,
