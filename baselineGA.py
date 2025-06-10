@@ -5,7 +5,7 @@ progress_cb(gen, best_pen) -> her 50 nesilde çağrılır (opsiyonel)
 import random, time, heapq
 from typing import Optional, Callable
 import numpy as np
-from timetabelingGA import CTTIndividual, diversity, mutate, crossover
+from timetablingGA import CTTIndividual, diversity, mutate, crossover
 
 POP_SIZE_DEFAULT, BIG_PENALTY = 40, 100_000
 

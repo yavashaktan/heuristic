@@ -1,5 +1,6 @@
 """
-timetabelingGA.py  – Adapted CTT Genetic Algorithm with violation‐based fitness and constructive seeding
+timetablingGA.py – Adapted CTT Genetic Algorithm with violation-based fitness
+and constructive seeding
 """
 from __future__ import annotations
 import random
